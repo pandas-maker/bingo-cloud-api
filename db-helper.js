@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const Database = require('better-sqlite3-multiple-ciphers');
 const { GridFSBucket } = require('mongodb');
-const { connectMongo } = require('./mongo');// adjust path to wherever mongo.js lives
+const { connectMongo } = require('./mongo'); // mongo.js lives at project root, same folder as this file
 
 function openEncrypted(dbPath, key) {
     const instance = new Database(dbPath);
