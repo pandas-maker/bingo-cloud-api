@@ -10,6 +10,9 @@ app.use(express.json());
 // Static frontend: cloud-login.html, cloud-dash.html, js/cloud-dash.js
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Root path has no index.html — send visitors to the login screen
+app.get('/', (req, res) => res.redirect('/cloud-login.html'));
+
 // API routes
 app.use('/api/cloud', cloudDashboard);   // login, lastrow, balance, fetch_data, fetch_back, fetch_content, basedinput
 app.use('/api', uploadDb);               // POST /api/upload-db — receives the sync from the local app
