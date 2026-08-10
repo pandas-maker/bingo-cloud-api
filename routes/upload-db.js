@@ -4,7 +4,14 @@ const multer = require('multer');
 const { GridFSBucket } = require('mongodb');
 const { connectMongo } = require('../mongo');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        console.log('[upload-db] File received:', file.originalname, 'size:', file.size);
+        cb(null, true);
+    }
+});
 
 // Global error handler to ensure JSON is always returned
 router.use((err, req, res, next) => {
@@ -29,10 +36,30 @@ router.post('/upload-db', upload.single('dbFile'), async (req, res) => {
             return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
 
+        console.log('[upload-db] Headers received:', {
+            'x-sync-secret': req.headers['x-sync-secret'] ? 'present' : 'missing',
+            'content-type': req.headers['content-type']
+        });
+
+        console.log('[upload-db] Body keys:', Object.keys(req.body));
+        console.log('[upload-db] Has file:', !!req.file);
+
+        // Check if multipart data was received
+        if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+            console.log('[upload-db] Multipart form-data detected');
+        } else {
+            console.log('[upload-db] WARNING: Content-Type is not multipart/form-data');
+        }
+
         const agentId = req.body.agent_id;
-        if (!agentId || !req.file) {
-            console.log('[upload-db] Missing agent_id or file', { agentId, hasFile: !!req.file });
-            return res.status(400).json({ success: false, message: 'Missing agent_id or file' });
+        if (!agentId) {
+            console.log('[upload-db] Missing agent_id in body');
+            return res.status(400).json({ success: false, message: 'Missing agent_id' });
+        }
+
+        if (!req.file) {
+            console.log('[upload-db] Missing file in request');
+            return res.status(400).json({ success: false, message: 'Missing file' });
         }
 
         console.log('[upload-db] Agent ID:', agentId, 'File size:', req.file.size);
